@@ -1,7 +1,9 @@
 # Audio
-lib/libacdbmapper.so     # needed_for_build
-lib/libaudioalsa.so     # needed_for_build
-lib/libacdbloader.so     # needed_for_build
+# needed_for_build begin copy this 3 files to /out/target/product/hws7300u/obj/lib/
+lib/libacdbmapper.so     
+lib/libaudioalsa.so     
+lib/libacdbloader.so
+# needed_for_build end
 lib/libaudcal.so
 lib/libaudioparsers.so
 
@@ -34,7 +36,7 @@ etc/loc_parameter.ini
 bin/loc_api_app
 lib/liboncrpc.so
 lib/libgps.so
-lib/libgps.utils.so
+#lib/libgps.utils.so
 lib/libloc_adapter.so
 lib/libloc_api-rpc-qc.so
 lib/libloc_eng.so

@@ -1,26 +1,27 @@
 import init.hws7300u.usb.rc
 
 on init
-    mkdir /mnt/media_rw/sdcard0 0700 media_rw media_rw
-    mkdir /storage/sdcard0 0700 root root
-    mkdir /storage/usbdisk 0775 system system
-    
     # Set permissions for persist partition
     mkdir /persist 0771 system system
 
     mount debugfs debugfs /sys/kernel/debug
 
-    symlink /storage/sdcard0 /sdcard
-    symlink /storage/sdcard0 /mnt/sdcard
-    export EXTERNAL_STORAGE /storage/sdcard0
-    
+    chmod 0701 /mnt/media_rw
+    chown root root /mnt/media_rw
+
     mkdir /mnt/shell/emulated 0700 shell shell
+
     mkdir /storage 0550 system sdcard_r
     mkdir /storage/emulated 0555 root root
-    mkdir /storage/usbdisk0 0775 system system
+    mkdir /storage/sdcard1 0775 system system
+    mkdir /storage/usbdisk 0775 system system
 
-    #export EXTERNAL_STORAGE /storage/emulated/legacy
-    export SECONDARY_STORAGE /storage/sdcard1
+    #External storage directories
+    mkdir /mnt/media_rw/sdcard1 0775 media_rw media_rw
+    mkdir /mnt/media_rw/sda 0775 media_rw media_rw
+
+    export EXTERNAL_STORAGE /storage/emulated/legacy
+    export SECONDARY_STORAGE /storage/sdcard1:/storage/usbdisk
     export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
     export EMULATED_STORAGE_TARGET /storage/emulated
 
@@ -35,10 +36,11 @@ on init
     symlink /storage/usbdisk0 /mnt/usbdisk0
 
     mkdir /devlog 0700 root root
+
     symlink /data/usercust /usercust
     mkdir /mnt/tmp 0000 system system
     mkdir /tmpdata 0771 system system
-    mkdir /persist 0771 system system
+    
 
     chmod 0777 /dev/lcd_ctrl
     chmod 0777 /system/bin/diagd
@@ -48,9 +50,13 @@ on early-boot
     setrlimit 8 67108864 67108864
 
 on post-fs-data
+    mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
+    chmod 0666 /sys/class/rfkill/rfkill0/state
+
     # we will remap this as /storage/sdcard0 with the sdcard fuse tool
-    mkdir /data/media 0770 media_rw media_rw
+    mkdir /data/media 0775 media_rw media_rw
     chown media_rw media_rw /data/media
+
     # double check the perms and set owner
     chown root root /devlog
     chmod 0700 /devlog
@@ -107,17 +113,21 @@ on boot
     chown system system /sys/devices/platform/msm_sdcc.3/polling
     chown system system /sys/devices/platform/msm_sdcc.4/polling
 
-    mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
-    chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power  
+    chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/type
     chown bluetooth bluetooth /sys/class/rfkill/rfkill0/state
     chown bluetooth bluetooth /proc/bluetooth/sleep/proto
-    chown system system /sys/module/sco/parameters/disable_esco
-    chown bluetooth bluetooth /sys/module/hci_smd/parameters/hcismd_set
+    chown bluetooth bluetooth /proc/bluetooth/sleep/lpm
+    chown bluetooth bluetooth /proc/bluetooth/sleep/btwrite
+
     chmod 0660 /sys/module/bluetooth_power/parameters/power
-    chmod 0660 /sys/module/hci_smd/parameters/hcismd_set
+
     chmod 0660 /sys/class/rfkill/rfkill0/state
+    chmod 0660 /proc/bluetooth/clock/proto
     chmod 0660 /proc/bluetooth/sleep/proto
+    chmod 0660 /proc/bluetooth/sleep/lpm
+    chmod 0660 /proc/bluetooth/sleep/btwrite
+
     chown bluetooth bluetooth /dev/ttyHS0
     chmod 0660 /dev/ttyHS0
     chown bluetooth bluetooth /sys/devices/platform/msm_serial_hs.0/clock
@@ -175,7 +185,7 @@ on boot
     chmod 0444 /sys/devices/platform/msm_hsusb/gadget/usb_state
 
     # Remove write permissions to video related nodes
-    chmod 0660 /sys/devices/virtual/graphics/fb1/video_mode
+    chmod 0664 /sys/devices/virtual/graphics/fb1/video_mode
     chmod 0440 /sys/devices/virtual/graphics/fb1/video_mode_str
     chmod 0440 /sys/devices/virtual/graphics/fb1/connected
     chmod 0440 /sys/devices/virtual/graphics/fb1/edid_modes
@@ -183,8 +193,8 @@ on boot
     chmod 0660 /sys/devices/virtual/graphics/fb1/hpd
     chmod 0440 /sys/devices/virtual/graphics/fb1/3d_present
     chmod 0440 /sys/devices/virtual/graphics/fb1/hdcp_present
-    chmod 0660 /sys/devices/virtual/graphics/fb1/format_3d
-    chmod 0660 /sys/devices/virtual/graphics/fb1/edid_3d_modes
+    chmod 0664 /sys/devices/virtual/graphics/fb1/format_3d
+    chmod 0664 /sys/devices/virtual/graphics/fb1/edid_3d_modes
     chmod 0440 /sys/devices/virtual/graphics/fb1/underscan
     chmod 0440 /sys/devices/virtual/graphics/fb1/dvi
     chmod 0440 /sys/devices/virtual/graphics/fb1/pa
@@ -271,19 +281,6 @@ service rmt_storage /system/bin/rmt_storage /dev/block/mmcblk0p11 /dev/block/mmc
 
 on property:ro.boot.emmc=true
     start rmt_storage
-
-service brcmpatch /system/bin/log -t brcm-bluetooth -p i "brcm_patchram_plus service requested"
-    user bluetooth
-    group bluetooth net_bt_admin
-    disabled
-    oneshot
-
-service hciattach /system/bin/sh /system/etc/init.brcm.bt.sh
-    class late_start
-    user bluetooth
-    group qcom_oncrpc bluetooth net_bt_admin
-    disabled
-    oneshot
 
 service bt-dun /system/bin/dun-server /dev/smd7 /dev/rfcomm0
     class late_start
@@ -555,18 +552,22 @@ service sensor_daemon /system/bin/sensor_daemon
 # create virtual SD card at /storage/sdcard0, based on the /data/media directory
 # daemon will drop to user/group system/media_rw after initializing
 # underlying files in /data/media will be created with user and group media_rw (1023)
-service sdcard /system/bin/sdcard /data/media /mnt/shell/emulated 1023 1023
+service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
     class late_start
     oneshot
 
-#sdcard daemon
-service fuse_sdcard0 /system/bin/sdcard -u 1023 -g 1023 -d /mnt/media_rw/sdcard0 /storage/sdcard0
+service fuse_sdcard1 /system/bin/sdcard -u 1023 -g 1023 /mnt/media_rw/sdcard1 /storage/sdcard1
     class late_start
     disabled
 
+service fuse_sda /system/bin/sdcard -u 1023 -g 1023 /mnt/media_rw/sda /storage/usbdisk
+    class late_start
+    disabled
 
 on property:ro.fuse_sdcard=true
     start sdcard
+    start fuse_sda
+    start fuse_sdcard
 
 # This will make sure that sdcard service starts as late_start.
 on nonencrypted
@@ -617,10 +618,6 @@ service load_logo /system/bin/load_logo
     disabled
     oneshot
 
-service bt_init_off /system/bin/sh /system/etc/bluetooth_power.sh
-    class main
-    oneshot
-
 service rmt_oeminfo /system/bin/rmt_oeminfo
 
 on property:ro.emmc=1
@@ -628,9 +625,3 @@ on property:ro.emmc=1
 
 service diagd /system/bin/diagd
     class main
-
-service hwinsmod /system/bin/sh /etc/init.hw.insmod.sh
-    class early_start
-    user root
-    group root
-    oneshot

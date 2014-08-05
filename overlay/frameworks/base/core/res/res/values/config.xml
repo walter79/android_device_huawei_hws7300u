@@ -21,8 +21,8 @@
      for different hardware and product builds. -->
 <resources>
 
-    <!-- True will enable the electron beam screen-off animation. -->
-    <bool name="config_screenOffAnimation">false</bool>
+    <!-- True will enable the electron beam screen-off animation. 
+    <bool name="config_screenOffAnimation">false</bool> -->
 	
     <!-- NOTE: Set to true for now so electron beam isn't used. This causes a screen lockup on our QCOM's right now. -->
     <bool name="config_animateScreenLights">true</bool>
@@ -50,8 +50,8 @@
              8 - Assistant (search)
             16 - App switch
          For example, a device with Home, Back and Menu keys would set this
-         config to 7. -->
-    <integer name="config_deviceHardwareKeys">0</integer>
+         config to 7. 
+    <integer name="config_deviceHardwareKeys">0</integer> -->
 
     <!-- Flag indicating whether we should enable the automatic brightness in Settings.
          config_hardware_automatic_brightness_available is not set, so we will use software implementation -->

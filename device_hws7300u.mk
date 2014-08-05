@@ -37,9 +37,9 @@ PRODUCT_CHARACTERISTICS := tablet
 DEVICE_PACKAGE_OVERLAYS += device/huawei/hws7300u/overlay
 
 # Modules
-PRODUCT_COPY_FILES += \
-    device/huawei/hws7300u/prebuilt/lib/modules/rpc_server_handset.ko:system/lib/modules/rpc_server_handset.ko \
-    device/huawei/hws7300u/prebuilt/lib/modules/dhd.ko:system/lib/modules/dhd.ko
+#PRODUCT_COPY_FILES += \
+#   device/huawei/hws7300u/prebuilt/lib/modules/rpc_server_handset.ko:system/lib/modules/rpc_server_handset.ko \
+#   device/huawei/hws7300u/prebuilt/lib/modules/dhd.ko:system/lib/modules/dhd.ko
 
 # Permissions
 PRODUCT_COPY_FILES += \
@@ -143,6 +143,7 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/huawei/hws7300u/root/fstab.hws7300u:root/fstab.hws7300u \
     device/huawei/hws7300u/root/ueventd.rc:root/ueventd.rc \
+    device/huawei/hws7300u/root/ueventd.rc:root/ueventd.hws7300u.rc \
     device/huawei/hws7300u/root/init.hws7300u.usb.rc:root/init.hws7300u.usb.rc \
     device/huawei/hws7300u/root/init.hws7300u.rc:root/init.hws7300u.rc \
     device/huawei/hws7300u/root/init.qcom.usb.sh:root/init.qcom.usb.sh \
@@ -220,7 +221,7 @@ PRODUCT_COPY_FILES += \
     device/huawei/hws7300u/prebuilt/etc/init.d/02extsd:system/etc/init.d/02extsd
 
 # Bootanimation
-PRODUCT_BOOTANIMATION := vendor/cm/prebuilt/common/bootanimation/800.zip
+PRODUCT_BOOTANIMATION := vendor/ev/prebuilt/720p/media/bootanimation.zip
 
 # Misc
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -235,6 +236,6 @@ $(call inherit-product-if-exists, vendor/huawei/hws7300u/hws7300u-vendor.mk)
 # We have enough storage space to hold precise GC data
 PRODUCT_TAGS += dalvik.gc.type-precise
 
-PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
-PRODUCT_NAME := cm_hws7300u
+#PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
+PRODUCT_NAME := ev_hws7300u
 PRODUCT_DEVICE := hws7300u
